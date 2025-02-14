@@ -5,15 +5,24 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const productAdminRoutes = require('./routes/admin/product')
+app.use('/admin', productAdminRoutes)
+
+const productRoutes = require('./routes/product')
+app.use(productRoutes)
+
 const sequelize = require("./util/db");
 
+const models = require('./models/index')
+sequelize.models = models
+
 sequelize
-  .authenticate()
+  .sync()
   .then(() => {
-    console.log("connected db");
+    console.log("db works");
   })
   .catch((error) => {
-    console.error("cant connect to db", error);
+    console.error(error);
   });
 
 app.get("/", (req, res) => {
