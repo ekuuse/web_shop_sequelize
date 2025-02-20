@@ -14,4 +14,12 @@ router.post("/cart/remove", (req, res) =>
     shopController.removeItemFromCart(req,res)
 );
 
+router.post("/cart/order", (req, res) =>
+    shopController.orderItems(req,res)
+);
+
+router.get("/cart/vieworders", (req, res) =>
+    shopController.viewOrderedItems(req,res)
+);
+
 module.exports = router;

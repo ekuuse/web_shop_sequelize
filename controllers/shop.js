@@ -1,6 +1,8 @@
 const Product = require("../models/product")
 const Cart = require("../models/cart")
 const CartItem = require("../models/cart-item")
+const Order = require("../models/order")
+const OrderItems = require("../models/order-items")
 
 class shopController {
     async getAllProducts(req,res) {
@@ -40,6 +42,7 @@ class shopController {
             return res.status(201).json({message: "item added to cart", cartItem: newCartItem})
         }
     }
+
     async removeItemFromCart(req,res) {
         const { productId }= req.body
 
@@ -58,6 +61,49 @@ class shopController {
             return res.status(400).json({message: "product not in cart"})
         }
     }
+
+    async orderItems(req,res) {
+        const userId = req.user.id
+        const userCart = await req.user.getCart()
+        const cartItems = await userCart.getProducts({attributes: ['id'], through: {attributes: ['quantity']}})
+
+        if (!cartItems.length) {
+            return res.status(400).json({error: "your cart has no items in it"})
+        }
+
+        const orderItems = cartItems.map(cartItem => {
+            const quantity = cartItem.CartItem ? cartItem.CartItem.quantity : 0
+
+            return {productId: cartItem.id, quantity: quantity}
+        })
+
+        const newOrder = await Order.create({userId})
+        for (const item of orderItems) {
+            await OrderItems.create({orderId: orderItems.id, ...item})
+        }
+
+        return res.status(201).json({ message: "order created successfully", newOrder})
+    }
+
+    async viewOrderedItems(req, res) {
+        const userId = req.user.id;
+    
+        const orderedItems = await Order.findAll({
+            where: { userId },
+            include: [{
+                model: OrderItems,
+                as: "orderItems",
+                include: [{
+                    model: Product,
+                    as: "product",
+                    attributes: ["id"]
+                }]
+            }]
+        });
+    
+        res.status(201).json({ orders: orderedItems });
+    }
+    
 }
 
 module.exports = new shopController()
