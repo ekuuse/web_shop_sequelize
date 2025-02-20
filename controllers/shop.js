@@ -62,28 +62,31 @@ class shopController {
         }
     }
 
-    async orderItems(req,res) {
+    async orderItems(req, res) {
         const userId = req.user.id
         const userCart = await req.user.getCart()
-        const cartItems = await userCart.getProducts({attributes: ['id'], through: {attributes: ['quantity']}})
-
+        const cartItems = await userCart.getProducts({ attributes: ['id'], through: { attributes: ['quantity'] } })
+    
         if (!cartItems.length) {
-            return res.status(400).json({error: "your cart has no items in it"})
+            return res.status(400).json({ error: "your cart has no items in it" })
         }
-
+    
         const orderItems = cartItems.map(cartItem => {
-            const quantity = cartItem.CartItem ? cartItem.CartItem.quantity : 0
-
-            return {productId: cartItem.id, quantity: quantity}
+            return {
+                productId: cartItem.id,
+                quantity: cartItem.CartItem ? cartItem.CartItem.quantity : 0
+            }
         })
-
-        const newOrder = await Order.create({userId})
+    
+        const newOrder = await Order.create({ userId })
+    
         for (const item of orderItems) {
-            await OrderItems.create({orderId: orderItems.id, ...item})
+            await OrderItems.create({ orderId: newOrder.id, ...item })
         }
-
-        return res.status(201).json({ message: "order created successfully", newOrder})
+    
+        return res.status(201).json({ message: "order created successfully", newOrder })
     }
+    
 
     async viewOrderedItems(req, res) {
         const userId = req.user.id;
@@ -96,7 +99,7 @@ class shopController {
                 include: [{
                     model: Product,
                     as: "product",
-                    attributes: ["id"]
+                    attributes: ["id", "name"]
                 }]
             }]
         });
