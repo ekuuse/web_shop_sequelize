@@ -99,7 +99,7 @@ class shopController {
                 include: [{
                     model: Product,
                     as: "product",
-                    attributes: ["id", "name"]
+                    attributes: ["id", "title"]
                 }]
             }]
         });
